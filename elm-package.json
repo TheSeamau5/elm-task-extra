@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Extra convenient functions for working with Tasks",
-    "repository": "https://github.com/USER/PROJECT.git",
+    "repository": "https://github.com/TheSeamau5/elm-task-extra.git",
     "license": "BSD3",
     "source-directories": [
         "src"
