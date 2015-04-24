@@ -11,6 +11,9 @@ for tasks.
 # Make operations async
 @docs computeLazyAsync
 
+# Delay a task
+@docs delay
+
 # Looping forever
 @docs loop
 -}
@@ -57,13 +60,20 @@ optional list = case list of
 
 {-| Runs a task repeatedly every given milliseconds.
 
-    loop 1000 myTask -- Runs my task every second
+    loop 1000 myTask -- Runs `myTask` every second
 -}
 loop : Time -> Task error value -> Task error ()
 loop every task =
   task
     `andThen` \_ -> sleep every
     `andThen` \_ -> loop every task
+
+{-| Delay a task by a given amount of time in milliseconds.
+-}
+delay : Time -> Task error value -> Task error value
+delay time task =
+  sleep time
+    `andThen` \_ -> task
 
 
 {-| Intercept the values computed by a task by sending them to appropriate addresses.
