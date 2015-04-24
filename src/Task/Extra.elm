@@ -53,9 +53,8 @@ optional : List (Task x value) -> Task y (List value)
 optional list = case list of
   [] -> succeed []
   task :: tasks ->
-    ( task
-        `andThen` \value -> Task.map ((::) value) ( optional tasks ) )
-    `onError` \_ -> optional tasks
+    ( task `andThen` \value -> Task.map ((::) value) ( optional tasks ) )
+      `onError` \_ -> optional tasks
 
 
 {-| Runs a task repeatedly every given milliseconds.
@@ -76,17 +75,19 @@ delay time task =
     `andThen` \_ -> task
 
 
-{-| Intercept the values computed by a task by sending them to appropriate addresses.
-If the task is successful, the value will be sent to the successAddress,
-if the task fails, the error value will be sent to the failAddress.
-The result task will just respectively `succeed` or `fail` the computed value
-such as making the interception process feel as though the task is unaffected.
-
-    intercept successAddress failAddress myTask
+{-| Intercept the values computed by a task by sending them to appropriate
+an address. The address accepts a Result such as to capture both successful
+values and error values. The intercepted task will simply `succeed` on success
+with the successful value and `fail` on failure with the error thus making
+the interception process feel as though the task is unaffected.
 -}
-intercept : Address value -> Address error -> Task error value -> Task error value
-intercept successAddress failAddress =
-  interceptError failAddress >> interceptSuccess successAddress
+intercept : Address (Result error value) -> Task error value -> Task error value
+intercept address task =
+  ( task  `onError` \error  -> send address (Err error)
+          `andThen` \_      -> fail error )
+    `andThen` \value  -> send address (Ok value)
+    `andThen` \_      -> succeed value
+
 
 {-| Intercept the successful value computed by a task by sending it to the given address.
 The result task will just `succeed` after being sent to the address thus making
@@ -113,8 +114,6 @@ interceptError failAddress task =
 -}
 computeLazyAsync : Address value -> (() -> value) -> Task error ()
 computeLazyAsync address lazy =
-  ( spawn <|
-      succeed lazy
-        `andThen` \f -> succeed (f ())
-        `andThen` \value -> send address value )
+  ( spawn <| succeed lazy `andThen` \f      -> succeed (f ())
+                          `andThen` \value  -> send address value )
     `andThen` \_ -> succeed ()
