@@ -16,6 +16,9 @@ for tasks.
 
 # Looping forever
 @docs loop
+
+# Handling errors
+@docs withDefault
 -}
 
 import Task   exposing (Task, ThreadID, fail, succeed, sleep, spawn, sequence, andThen, onError)
@@ -117,3 +120,13 @@ computeLazyAsync address lazy =
   ( spawn <| succeed lazy `andThen` \f      -> succeed (f ())
                           `andThen` \value  -> send address value )
     `andThen` \_ -> succeed ()
+
+
+{-| Translates the given `Task` to a `Task` that cannot fail. If it would
+normally fail, instead it succeeds with the given default value.
+-}
+withDefault : a -> Task x a -> Task y a
+withDefault default task =
+  task
+    |> Task.toMaybe
+    |> Task.map (Maybe.withDefault default)
