@@ -3,7 +3,7 @@ module Task.Extra where
 for tasks.
 
 # Chaining Tasks
-@docs optional, parallel, next
+@docs optional, parallel, next, nextFromError
 
 # Communicating with Mailboxes
 @docs broadcast, intercept, interceptSuccess, interceptError
@@ -46,6 +46,18 @@ for easier use with pipes.
 next : (a -> Task x b) -> Task x a -> Task x b
 next =
   flip Task.andThen
+
+
+{-| Flipped version of [Task.onError](http://package.elm-lang.org/packages/elm-lang/core/2.1.0/Task#onError)
+for easier use with pipes.
+
+    Http.get decoder url
+        |> nextFromError (\err -> makeSomeTask err)
+        |> nextFromError (\anotherErr -> makeAnotherTask anotherErr)
+-}
+nextFromError : (x -> Task y a) -> Task x a -> Task y a
+nextFromError =
+  flip Task.onError
 
 
 {-| Sends a value to a list of addresses at once.
